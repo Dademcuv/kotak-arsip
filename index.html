@@ -281,7 +281,7 @@
     document.getElementById('setupWarning').classList.add('show');
   }
 
-  const dropzone = document.getElementById('dropzone');
+try {  const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
   const queueEl = document.getElementById('queue');
   const grid = document.getElementById('grid');
@@ -435,7 +435,7 @@
     if(e.key === 'Escape') closeLightbox();
   });
 
-  loadGallery();
+  loadGallery();} catch(e) { alert('ERROR ASLI: ' + e.message); }
 </script>
 
 </body>
