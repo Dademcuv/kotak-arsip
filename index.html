@@ -350,9 +350,9 @@
 
     if(error){
       row.classList.add('error');
-      row.querySelector('.status').textContent = 'gagal';
+      row.querySelector('.status').textContent = 'gagal: ' + (error.message || JSON.stringify(error));
       bar.style.width = '100%';
-      console.error(error);alert('Upload gagal: ' + error.message);
+      console.error(error);
       return;
     }
 
