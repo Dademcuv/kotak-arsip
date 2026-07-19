@@ -352,7 +352,7 @@
       row.classList.add('error');
       row.querySelector('.status').textContent = 'gagal';
       bar.style.width = '100%';
-      console.error(error);
+      console.error(error);alert('Upload gagal: ' + error.message);
       return;
     }
 
