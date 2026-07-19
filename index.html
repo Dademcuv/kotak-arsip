@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"><script src="https://cdn.jsdelivr.net/npm/eruda"></script><script>eruda.init();</script>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Kotak Arsip — Penyimpanan Foto & Video Pribadi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,7 +32,6 @@
   }
   ::selection{background:var(--amber);color:var(--bg);}
 
-  /* Sprocket strip — film motif */
   .sprocket-strip{
     display:flex;
     gap:14px;
@@ -79,7 +78,6 @@
 
   main{max-width:820px;margin:0 auto;padding:0 24px 80px;}
 
-  /* Upload dropzone */
   .dropzone{
     margin-top:28px;
     border:1px dashed var(--border);
@@ -127,7 +125,6 @@
   .queue-item .status{width:60px;text-align:right;color:var(--teal);flex-shrink:0;}
   .queue-item.error .status{color:var(--rust);}
 
-  /* Gallery — contact sheet */
   .gallery-head{
     display:flex;justify-content:space-between;align-items:baseline;
     margin-top:44px;margin-bottom:14px;
@@ -173,7 +170,6 @@
     text-shadow:0 1px 2px rgba(0,0,0,.6);
   }
 
-  /* Lightbox */
   .lightbox{
     position:fixed;inset:0;background:rgba(10,10,7,0.96);
     display:none;align-items:center;justify-content:center;
@@ -234,7 +230,7 @@
 
 <main>
   <div id="setupWarning" class="setup-warning">
-    Konfigurasi Supabase belum diisi. Buka <code>index.html</code>, cari bagian <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code> di dalam tag <code>&lt;script&gt;</code> paling bawah, lalu isi dengan kredensial project Supabase kamu. Lihat README.md untuk langkah lengkap.
+    Konfigurasi Supabase belum diisi. Buka <code>index.html</code>, cari bagian <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code> di dalam tag <code>&lt;script&gt;</code> paling bawah, lalu isi dengan kredensial project Supabase kamu.
   </div>
 
   <div class="dropzone" id="dropzone">
@@ -267,21 +263,23 @@
 
 <script>
   // ============================================================
-  // 1. ISI KONFIGURASI SUPABASE KAMU DI SINI
+  // 1. KONFIGURASI SUPABASE
   // ============================================================
   const SUPABASE_URL = "https://kgnyjyxqqtynvugqmsmy.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnbnlqeXhxcXR5bnZ1Z3Ftc215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4NDIwNjAsImV4cCI6MjA5OTQxODA2MH0.J3f1NTpLYbZJGTlGlDzTvxN1vDR2VPE95Amn6dvT2Ws";
-  const BUCKET_NAME = "DADEMCUV"; //
+  const BUCKET_NAME = "DADEMCUV";
   // ============================================================
 
   const isConfigured = !SUPABASE_URL.includes("xxxxxxxxxxxx") && !SUPABASE_ANON_KEY.includes("isi-anon-key");
-  const supabase = isConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+  // PENTING: nama variabel client di sini adalah "sb", BUKAN "supabase" —
+  // karena "supabase" sudah dipakai duluan oleh library-nya sendiri.
+  const sb = isConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
   if (!isConfigured) {
     document.getElementById('setupWarning').classList.add('show');
   }
 
-try {  const dropzone = document.getElementById('dropzone');
+  const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
   const queueEl = document.getElementById('queue');
   const grid = document.getElementById('grid');
@@ -308,7 +306,6 @@ try {  const dropzone = document.getElementById('dropzone');
     return bytes.toFixed(1)+' '+units[i];
   }
 
-  // ---------- Upload ----------
   dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
   dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
   dropzone.addEventListener('drop', e => {
@@ -346,7 +343,7 @@ try {  const dropzone = document.getElementById('dropzone');
     const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
     const path = `${Date.now()}_${safeName}`;
 
-    const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, file, {
+    const { error } = await sb.storage.from(BUCKET_NAME).upload(path, file, {
       cacheControl: '3600',
       upsert: false
     });
@@ -365,10 +362,9 @@ try {  const dropzone = document.getElementById('dropzone');
     loadGallery();
   }
 
-  // ---------- Gallery ----------
   async function loadGallery(){
     if(!isConfigured) return;
-    const { data, error } = await supabase.storage.from(BUCKET_NAME).list('', {
+    const { data, error } = await sb.storage.from(BUCKET_NAME).list('', {
       sortBy: { column: 'created_at', order: 'desc' }
     });
     if(error){ console.error(error); return; }
@@ -386,7 +382,7 @@ try {  const dropzone = document.getElementById('dropzone');
     grid.innerHTML = '';
 
     files.forEach((f, idx) => {
-      const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(f.name);
+      const { data: urlData } = sb.storage.from(BUCKET_NAME).getPublicUrl(f.name);
       const url = urlData.publicUrl;
       const video = isVideo(f.name);
 
@@ -425,7 +421,7 @@ try {  const dropzone = document.getElementById('dropzone');
   lightboxDelete.addEventListener('click', async () => {
     if(!currentItem) return;
     if(!confirm(`Hapus "${currentItem.name}"? Tidak bisa dibatalkan.`)) return;
-    const { error } = await supabase.storage.from(BUCKET_NAME).remove([currentItem.name]);
+    const { error } = await sb.storage.from(BUCKET_NAME).remove([currentItem.name]);
     if(error){ alert('Gagal menghapus: ' + error.message); return; }
     closeLightbox();
     loadGallery();
@@ -435,7 +431,7 @@ try {  const dropzone = document.getElementById('dropzone');
     if(e.key === 'Escape') closeLightbox();
   });
 
-  loadGallery();} catch(e) { alert('ERROR ASLI: ' + e.message); }
+  loadGallery();
 </script>
 
 </body>
