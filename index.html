@@ -184,7 +184,7 @@
     font-family:'JetBrains Mono',monospace;font-size:12px;
     color:var(--paper-dim);margin-top:16px;text-align:center;
   }
-  .lightbox-actions{margin-top:18px;display:flex;gap:10px;}
+  .lightbox-actions{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
   .btn{
     font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
     padding:9px 16px;border-radius:var(--radius);border:1px solid var(--border);
@@ -331,6 +331,7 @@
     <div id="lightboxMedia"></div>
     <div class="lightbox-meta" id="lightboxMeta"></div>
     <div class="lightbox-actions">
+      <button class="btn" id="lightboxShare">Bagikan</button>
       <a class="btn" id="lightboxDownload" download>Unduh</a>
       <button class="btn danger" id="lightboxDelete">Hapus</button>
     </div>
@@ -429,10 +430,12 @@
     const lightboxMedia = document.getElementById('lightboxMedia');
     const lightboxMeta = document.getElementById('lightboxMeta');
     const lightboxDownload = document.getElementById('lightboxDownload');
+    const lightboxShare = document.getElementById('lightboxShare');
     const lightboxDelete = document.getElementById('lightboxDelete');
     const lightboxClose = document.getElementById('lightboxClose');
 
     let currentItem = null;
+    let currentUrl = '';
 
     function isVideo(name){
       return /\.(mp4|mov|webm|m4v|avi)$/i.test(name);
@@ -536,6 +539,7 @@
 
     function openLightbox(file, url, video){
       currentItem = file;
+      currentUrl = url;
       lightboxMedia.innerHTML = video
         ? `<video src="${url}" controls autoplay></video>`
         : `<img src="${url}" alt="${file.name}">`;
@@ -550,6 +554,29 @@
       lightboxMedia.innerHTML = '';
       currentItem = null;
     }
+
+    lightboxShare.addEventListener('click', async () => {
+      if(!currentItem || !currentUrl) return;
+      const shareData = {
+        title: currentItem.name,
+        text: 'Lihat file ini dari Kotak Arsip',
+        url: currentUrl
+      };
+      if(navigator.share){
+        try{
+          await navigator.share(shareData);
+        }catch(err){
+          if(err.name !== 'AbortError') console.error(err);
+        }
+      } else {
+        try{
+          await navigator.clipboard.writeText(currentUrl);
+          alert('Link disalin ke clipboard! Tempel di WhatsApp/Instagram/dll untuk membagikan.');
+        }catch(err){
+          prompt('Salin link ini secara manual:', currentUrl);
+        }
+      }
+    });
 
     lightboxClose.addEventListener('click', closeLightbox);
     lightbox.addEventListener('click', e => { if(e.target === lightbox) closeLightbox(); });
